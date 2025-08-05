@@ -12,7 +12,6 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")  # Хранится в GitHub Secrets
 GROUP_CHAT_ID = int(os.environ.get("GROUP_CHAT_ID", "-1002444770684"))
 THREAD_ID = int(os.environ.get("THREAD_ID", "2"))
 USER_DATA_FILE = "subscribers.json"
-MSK = pytz.timezone("Europe/Moscow")
 
 # === Сообщения ===
 JOKES = [
@@ -107,28 +106,25 @@ def load_users():
 async def main():
     bot = Bot(BOT_TOKEN)
 
-    # Правильное текущее время в МСК
-    now = datetime.now(pytz.utc).astimezone(MSK)
-    logging.info(f"⏳ Скрипт запущен в {now.strftime('%H:%M:%S')} МСК. Проверяем время...")
+    now = datetime.utcnow()
+    logging.info(f"⏳ Скрипт запущен в {now.strftime('%H:%M:%S')} UTC. Проверяем время...")
 
-    # Цель — 20:50 по МСК
-    target = now.replace(hour=20, minute=50, second=0, microsecond=0)
+    # Ждём до 17:50 UTC (20:50 МСК)
+    target = now.replace(hour=17, minute=50, second=0, microsecond=0)
     if now < target:
         wait_seconds = (target - now).total_seconds()
-        logging.info(f"💤 Ждём до 20:50 МСК — {int(wait_seconds)} секунд...")
+        logging.info(f"💤 Ждём до 17:50 UTC (20:50 МСК) — {int(wait_seconds)} секунд...")
         await asyncio.sleep(wait_seconds)
     else:
-        logging.warning("⚠️ Уже позже 20:50, начинаем сразу.")
+        logging.warning("⚠️ Уже позже 17:50 UTC. Начинаем сразу.")
 
-    now = datetime.now(pytz.utc).astimezone(MSK).strftime("%H:%M:%S")
-    logging.info(f"🕒 Сейчас {now}. Начинаем рассылку.")
+    logging.info(f"🕒 Сейчас {datetime.utcnow().strftime('%H:%M:%S')} UTC. Начинаем рассылку.")
 
     subscribers = load_users()
     if not subscribers:
         logging.warning("⚠️ Нет подписчиков.")
         return
 
-    # Сообщение в группу
     try:
         await bot.send_message(
             chat_id=GROUP_CHAT_ID,
@@ -139,7 +135,6 @@ async def main():
     except Exception as e:
         logging.error(f"❌ Ошибка отправки в группу: {e}")
 
-    # Сообщения в ЛС
     success = 0
     fail = 0
     for uid in subscribers:
@@ -154,4 +149,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
