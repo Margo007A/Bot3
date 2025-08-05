@@ -107,10 +107,11 @@ def load_users():
 async def main():
     bot = Bot(BOT_TOKEN)
 
-    now = datetime.now(MSK)
+    # Правильное текущее время в МСК
+    now = datetime.now(pytz.utc).astimezone(MSK)
     logging.info(f"⏳ Скрипт запущен в {now.strftime('%H:%M:%S')} МСК. Проверяем время...")
 
-    # Ждём до 20:50, если запустилось раньше
+    # Цель — 20:50 по МСК
     target = now.replace(hour=20, minute=50, second=0, microsecond=0)
     if now < target:
         wait_seconds = (target - now).total_seconds()
@@ -119,7 +120,7 @@ async def main():
     else:
         logging.warning("⚠️ Уже позже 20:50, начинаем сразу.")
 
-    now = datetime.now(MSK).strftime("%H:%M:%S")
+    now = datetime.now(pytz.utc).astimezone(MSK).strftime("%H:%M:%S")
     logging.info(f"🕒 Сейчас {now}. Начинаем рассылку.")
 
     subscribers = load_users()
@@ -132,7 +133,7 @@ async def main():
         await bot.send_message(
             chat_id=GROUP_CHAT_ID,
             message_thread_id=THREAD_ID,
-            text="Примерно 20:50 МСК 🔔 Время делать скрины! Все получили напоминание в лс."
+            text="20:50 МСК 🔔 Время делать скрины! Все получили напоминание в лс."
         )
         logging.info("📣 Напоминание отправлено в группу.")
     except Exception as e:
@@ -153,5 +154,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
